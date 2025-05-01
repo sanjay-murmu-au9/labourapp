@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   filterContainer: {
-    paddingVertical: 10,
+    paddingVertical: 15,
     paddingHorizontal: 15,
     backgroundColor: '#fff',
   },
