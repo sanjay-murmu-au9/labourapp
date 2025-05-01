@@ -27,7 +27,7 @@ interface Job {
 
 const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
   const { userProfile } = route.params;
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<string>('ALL');
 
   const jobTypes = ['ALL', 'MASONRY', 'CARPENTER', 'PAINTER', 'LABOUR'];
 
@@ -70,9 +70,9 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
     },
   ];
 
-  const filteredJobs = selectedFilter && selectedFilter !== 'ALL'
-    ? jobs.filter(job => job.type === selectedFilter)
-    : jobs;
+  const filteredJobs = selectedFilter === 'ALL'
+    ? jobs
+    : jobs.filter(job => job.type === selectedFilter);
 
   const handleApply = (jobId: string) => {
     // TODO: Implement job application logic
@@ -110,31 +110,34 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
         <Text style={styles.headerTitle}>Available Jobs</Text>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-      >
-        {jobTypes.map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={[
-              styles.filterButton,
-              selectedFilter === type && styles.filterButtonActive,
-            ]}
-            onPress={() => setSelectedFilter(type)}
-          >
-            <Text
+      <View style={styles.filterWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterContainer}
+          contentContainerStyle={styles.filterContent}
+        >
+          {jobTypes.map((type) => (
+            <TouchableOpacity
+              key={type}
               style={[
-                styles.filterButtonText,
-                selectedFilter === type && styles.filterButtonTextActive,
+                styles.filterButton,
+                selectedFilter === type && styles.filterButtonActive,
               ]}
+              onPress={() => setSelectedFilter(type)}
             >
-              {type}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  selectedFilter === type && styles.filterButtonTextActive,
+                ]}
+              >
+                {type}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       <FlatList
         data={filteredJobs}
@@ -161,17 +164,28 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  filterContainer: {
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+  filterWrapper: {
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  filterContainer: {
+    flexGrow: 0,
+  },
+  filterContent: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
   },
   filterButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: '#f0f0f0',
-    marginRight: 10,
+    marginRight: 8,
+    minWidth: 70,
+    maxWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterButtonActive: {
     backgroundColor: WHATSAPP_GREEN,
@@ -179,73 +193,75 @@ const styles = StyleSheet.create({
   filterButtonText: {
     color: '#666',
     fontWeight: 'bold',
+    fontSize: 13,
   },
   filterButtonTextActive: {
     color: '#fff',
   },
   jobsList: {
-    padding: 15,
+    padding: 12,
   },
   jobCard: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 2,
   },
   jobHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   jobTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#333',
     flex: 1,
   },
   wage: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: WHATSAPP_GREEN,
   },
   jobDetails: {
-    marginBottom: 15,
+    marginBottom: 12,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   detailText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    marginLeft: 5,
+    marginLeft: 4,
     flex: 1,
   },
   distance: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
   },
   description: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    marginTop: 5,
+    marginTop: 4,
+    lineHeight: 18,
   },
   applyButton: {
     backgroundColor: WHATSAPP_GREEN,
-    padding: 10,
-    borderRadius: 5,
+    padding: 8,
+    borderRadius: 4,
     alignItems: 'center',
   },
   applyButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
   },
 });
