@@ -29,42 +29,66 @@ const OccupationScreen: React.FC<OccupationScreenProps> = ({ route, navigation }
   return (
     <ScrollView style={styles.scrollView}>
       <View style={styles.container}>
-        <Text style={styles.title}>Choose Your Role</Text>
+        <Text style={styles.mainTitle}>Choose your role</Text>
+        <Text style={styles.subtitle}>Select how you want to use the app</Text>
 
         <View style={styles.optionsContainer}>
+          {/* Labour Option */}
           <TouchableOpacity
-            style={styles.optionButton}
+            style={styles.optionCard}
             onPress={() => handleOptionPress("I'M LABOUR")}
           >
-            <Text style={styles.optionButtonText}>I'M LABOUR</Text>
+            <View style={styles.optionContent}>
+              <View style={styles.optionHeader}>
+                <Text style={styles.optionNumber}>1</Text>
+                <Text style={styles.optionTitle}>I'm a Labour</Text>
+              </View>
+              <Text style={styles.optionDescription}>
+                Looking for daily wage work opportunities
+              </Text>
+            </View>
           </TouchableOpacity>
 
+          {/* Mistry Option */}
           <TouchableOpacity
-            style={styles.optionButton}
+            style={styles.optionCard}
             onPress={() => handleOptionPress("I'M MISTRY")}
           >
-            <Text style={styles.optionButtonText}>I'M MISTRY</Text>
+            <View style={styles.optionContent}>
+              <View style={styles.optionHeader}>
+                <Text style={styles.optionNumber}>2</Text>
+                <Text style={styles.optionTitle}>I'm a Mistry</Text>
+              </View>
+              <Text style={styles.optionDescription}>
+                Skilled construction professional seeking projects
+              </Text>
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.optionButton}
-            onPress={() => handleOptionPress("I NEED LABOUR")}
-          >
-            <Text style={styles.optionButtonText}>I NEED LABOUR</Text>
-          </TouchableOpacity>
+          <View style={styles.orContainer}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>OR</Text>
+            <View style={styles.orLine} />
+          </View>
 
+          {/* Hiring Option */}
           <TouchableOpacity
-            style={styles.optionButton}
-            onPress={() => handleOptionPress("I NEED MISTRY")}
-          >
-            <Text style={styles.optionButtonText}>I NEED MISTRY</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.optionButton}
+            style={[styles.optionCard, styles.hiringCard]}
             onPress={() => handleOptionPress("I NEED LABOUR/MISTRY")}
           >
-            <Text style={styles.optionButtonText}>I NEED LABOUR/MISTRY</Text>
+            <View style={styles.optionContent}>
+              <View style={styles.optionHeader}>
+                <Text style={[styles.optionNumber, styles.hiringNumber]}>3</Text>
+                <Text style={[styles.optionTitle, styles.hiringTitle]}>I Want to Hire</Text>
+              </View>
+              <Text style={[styles.optionDescription, styles.hiringDescription]}>
+                Find and hire workers for your project
+              </Text>
+              <View style={styles.workerTypes}>
+                <Text style={styles.workerType}>✓ Daily wage workers</Text>
+                <Text style={styles.workerType}>✓ Skilled construction professionals</Text>
+              </View>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -79,37 +103,103 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#fff',
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 40,
   },
-  title: {
-    fontSize: 28,
+  mainTitle: {
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 40,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 32,
     textAlign: 'center',
   },
   optionsContainer: {
     width: '100%',
-    alignItems: 'center',
+    gap: 16,
   },
-  optionButton: {
+  optionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: WHATSAPP_GREEN,
+  },
+  hiringCard: {
     backgroundColor: WHATSAPP_GREEN,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    marginVertical: 10,
-    width: '90%',
-    alignItems: 'center',
+    borderWidth: 0,
   },
-  optionButtonText: {
+  optionContent: {
+    gap: 12,
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  optionNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: WHATSAPP_GREEN,
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+    lineHeight: 32,
+  },
+  hiringNumber: {
+    backgroundColor: '#fff',
+    color: WHATSAPP_GREEN,
+  },
+  optionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  hiringTitle: {
+    color: '#fff',
+  },
+  optionDescription: {
+    fontSize: 15,
+    color: '#666',
+    marginLeft: 44,
+  },
+  hiringDescription: {
+    color: '#fff',
+    opacity: 0.9,
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  orText: {
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '600',
+  },
+  workerTypes: {
+    marginTop: 8,
+    marginLeft: 44,
+  },
+  workerType: {
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 6,
+    opacity: 0.9,
   },
 });
 
