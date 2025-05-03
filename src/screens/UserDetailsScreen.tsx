@@ -14,9 +14,19 @@ interface EditModalProps {
   onSave: (value: string) => void;
   value: string;
   title: string;
+  type?: 'text' | 'select';
+  options?: string[];
 }
 
-const EditModal: React.FC<EditModalProps> = ({ visible, onClose, onSave, value: initialValue, title }) => {
+const EditModal: React.FC<EditModalProps> = ({ 
+  visible, 
+  onClose, 
+  onSave, 
+  value: initialValue, 
+  title,
+  type = 'text',
+  options = [] 
+}) => {
   const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
@@ -40,25 +50,53 @@ const EditModal: React.FC<EditModalProps> = ({ visible, onClose, onSave, value: 
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{title}</Text>
-          <TextInput
-            style={styles.modalInput}
-            value={value}
-            onChangeText={setValue}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={handleSave}
-          />
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={styles.modalButton} onPress={onClose}>
-              <Text style={styles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.saveButton]}
-              onPress={handleSave}
-            >
-              <Text style={[styles.modalButtonText, styles.saveButtonText]}>Save</Text>
-            </TouchableOpacity>
-          </View>
+          {type === 'select' ? (
+            <View style={styles.optionsContainer}>
+              {options.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.optionButton,
+                    value === option && styles.selectedOption
+                  ]}
+                  onPress={() => {
+                    setValue(option);
+                    onSave(option);
+                    onClose();
+                  }}
+                >
+                  <Text style={[
+                    styles.optionText,
+                    value === option && styles.selectedOptionText
+                  ]}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <TextInput
+              style={styles.modalInput}
+              value={value}
+              onChangeText={setValue}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleSave}
+            />
+          )}
+          {type === 'text' && (
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={onClose}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleSave}
+              >
+                <Text style={[styles.modalButtonText, styles.saveButtonText]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -66,8 +104,11 @@ const EditModal: React.FC<EditModalProps> = ({ visible, onClose, onSave, value: 
 };
 
 const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation }) => {
-  const [userProfile, setUserProfile] = useState(route.params.userProfile);
-  const [editField, setEditField] = useState<'name' | 'location' | null>(null);
+  const [userProfile, setUserProfile] = useState({
+    ...route.params.userProfile,
+    gender: route.params.userProfile.gender || 'Male' // Set default gender as Male
+  });
+  const [editField, setEditField] = useState<'name' | 'location' | 'language' | 'gender' | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -100,7 +141,7 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
     }
   };
 
-  const handleEdit = (field: 'name' | 'location') => {
+  const handleEdit = (field: 'name' | 'location' | 'language' | 'gender') => {
     setEditField(field);
   };
 
@@ -108,10 +149,15 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
     if (editField) {
       const updatedProfile = {
         ...userProfile,
-        [editField]: editField === 'location' && userProfile.location
-          ? { ...userProfile.location, address: value }
-          : editField === 'location'
-          ? { address: value }
+        [editField]: editField === 'location' 
+          ? { 
+              ...(userProfile.location || {}),
+              address: value,
+              coordinates: userProfile.location?.coordinates || {
+                latitude: 20.5937,
+                longitude: 78.9629,
+              }
+            }
           : value
       };
 
@@ -200,17 +246,43 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
           </View>
         </View>
 
-        {userProfile.location && (
-          <View style={styles.profileItem}>
-            <Text style={styles.label}>Location</Text>
-            <View style={styles.valueContainer}>
-              <Text style={styles.value}>{userProfile.location.address}</Text>
-              <TouchableOpacity onPress={() => handleEdit('location')}>
-                <Icon name="edit" size={20} color="#128C7E" />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.profileItem}>
+          <Text style={styles.label}>Language</Text>
+          <View style={styles.valueContainer}>
+            <Text style={styles.value}>{userProfile.language || 'Hindi'}</Text>
+            <TouchableOpacity onPress={() => handleEdit('language')}>
+              <Icon name="edit" size={20} color="#128C7E" />
+            </TouchableOpacity>
           </View>
-        )}
+        </View>
+
+        <View style={styles.profileItem}>
+          <Text style={styles.label}>Gender</Text>
+          <View style={styles.valueContainer}>
+            <Text style={styles.value}>{userProfile.gender || 'Not specified'}</Text>
+            <TouchableOpacity onPress={() => handleEdit('gender')}>
+              <Icon name="edit" size={20} color="#128C7E" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={[styles.profileItem, styles.locationItem]}>
+          <Text style={styles.label}>Location</Text>
+          <View style={styles.valueContainer}>
+            <View style={styles.locationValueContainer}>
+              <Icon name="location-on" size={20} color="#128C7E" style={styles.locationIcon} />
+              <Text style={[styles.value, styles.locationValue]}>
+                {userProfile.location?.address || 'Set your location'}
+              </Text>
+            </View>
+            <TouchableOpacity 
+              onPress={() => handleEdit('location')}
+              style={styles.editButton}
+            >
+              <Icon name="edit" size={20} color="#128C7E" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -225,11 +297,17 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
         value={
           editField === 'location'
             ? userProfile.location?.address || ''
+            : editField === 'language'
+            ? userProfile.language || 'Hindi'
+            : editField === 'gender'
+            ? userProfile.gender || ''
             : editField
               ? userProfile[editField] || ''
               : ''
         }
         title={`Edit ${editField?.charAt(0).toUpperCase()}${editField?.slice(1) || ''}`}
+        type={editField === 'gender' ? 'select' : 'text'}
+        options={editField === 'gender' ? ['Male', 'Female', 'Other'] : undefined}
       />
     </View>
   );
@@ -252,23 +330,23 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
+    marginTop: 15,
+    marginBottom: 20,
   },
   imageWrapper: {
     position: 'relative',
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 3,
     borderColor: '#128C7E',
   },
   defaultImageContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
@@ -280,24 +358,26 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: '#128C7E',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#fff',
   },
   profileSection: {
-    padding: 20,
+    padding: 12, // Reduced padding
+    paddingBottom: 80, // Add bottom padding to ensure content is visible above logout button
+    flex: 1,
   },
   profileItem: {
-    marginBottom: 24,
+    marginBottom: 16, // Reduced from 24
   },
   label: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginBottom: 4, // Reduced from 8
   },
   valueContainer: {
     flexDirection: 'row',
@@ -305,7 +385,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    paddingBottom: 8,
+    paddingBottom: 6, // Reduced from 8
   },
   value: {
     fontSize: 16,
@@ -365,14 +445,59 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginHorizontal: 20,
-    marginTop: 'auto',
-    marginBottom: 20,
+    marginBottom: 16, // Reduced from 20
+    position: 'absolute', // Changed back to absolute
+    bottom: 0, // Position at bottom
+    left: 0,
+    right: 0,
   },
   logoutButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  optionsContainer: {
+    marginVertical: 10,
+  },
+  optionButton: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+  },
+  selectedOption: {
+    backgroundColor: '#128C7E',
+  },
+  optionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  selectedOptionText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  locationItem: {
+    backgroundColor: '#f8f8f8',
+    padding: 10, // Reduced from 12
+    borderRadius: 8,
+    marginBottom: 16, // Reduced from 24
+  },
+  locationValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  locationIcon: {
+    marginRight: 8,
+  },
+  locationValue: {
+    flex: 1,
+    color: '#333',
+  },
+  editButton: {
+    padding: 4,
   },
 });
 

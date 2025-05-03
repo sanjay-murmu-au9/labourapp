@@ -3,6 +3,8 @@ export type UserProfile = {
   phoneNumber: string;
   occupation: string;
   profileImage?: string; // URI of the profile image
+  language?: string;
+  gender?: 'Male' | 'Female' | 'Other';
   location?: {
     address: string;
     coordinates: {
