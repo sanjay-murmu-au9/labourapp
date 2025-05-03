@@ -109,3 +109,26 @@ export const logout = async () => {
     return false;
   }
 };
+
+export const deleteAccount = async (phoneNumber: string) => {
+  try {
+    // Remove from registered users
+    const registeredUsers = await getRegisteredUsers();
+    const updatedUsers = registeredUsers.filter(user => user.phoneNumber !== phoneNumber);
+    await AsyncStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(updatedUsers));
+
+    // Clear current user profile if it matches
+    const currentUser = await getCurrentUser();
+    if (currentUser?.phoneNumber === phoneNumber) {
+      await AsyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
+    }
+
+    // Clear device association
+    await clearDeviceAssociation();
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return false;
+  }
+};

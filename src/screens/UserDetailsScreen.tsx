@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, Image, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { Icon } from 'react-native-elements';
-import { storeUserProfile, logout } from '../utils/storage';
+import { storeUserProfile, logout, deleteAccount } from '../utils/storage';
 import * as ImagePicker from 'expo-image-picker';
 
 type UserDetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'UserDetails'>;
@@ -18,14 +18,14 @@ interface EditModalProps {
   options?: string[];
 }
 
-const EditModal: React.FC<EditModalProps> = ({ 
-  visible, 
-  onClose, 
-  onSave, 
-  value: initialValue, 
+const EditModal: React.FC<EditModalProps> = ({
+  visible,
+  onClose,
+  onSave,
+  value: initialValue,
   title,
   type = 'text',
-  options = [] 
+  options = []
 }) => {
   const [value, setValue] = useState(initialValue);
 
@@ -149,8 +149,8 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
     if (editField) {
       const updatedProfile = {
         ...userProfile,
-        [editField]: editField === 'location' 
-          ? { 
+        [editField]: editField === 'location'
+          ? {
               ...(userProfile.location || {}),
               address: value,
               coordinates: userProfile.location?.coordinates || {
@@ -197,93 +197,130 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
     );
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            const success = await deleteAccount(userProfile.phoneNumber);
+            if (success) {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'PhoneLogin' }],
+              });
+            } else {
+              Alert.alert("Error", "Failed to delete account. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.profileImageContainer}>
-        <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
-          {userProfile.profileImage ? (
-            <Image 
-              source={{ uri: userProfile.profileImage }} 
-              style={styles.profileImage} 
-            />
-          ) : (
-            <View style={styles.defaultImageContainer}>
-              <Icon name="person" size={50} color="#128C7E" />
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.profileImageContainer}>
+          <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
+            {userProfile.profileImage ? (
+              <Image
+                source={{ uri: userProfile.profileImage }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <View style={styles.defaultImageContainer}>
+                <Icon name="person" size={50} color="#128C7E" />
+              </View>
+            )}
+            <View style={styles.editImageButton}>
+              <Icon name="camera-alt" size={20} color="#fff" />
             </View>
-          )}
-          <View style={styles.editImageButton}>
-            <Icon name="camera-alt" size={20} color="#fff" />
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.profileSection}>
-        <View style={styles.profileItem}>
-          <Text style={styles.label}>Name</Text>
-          <View style={styles.valueContainer}>
-            <Text style={styles.value}>{userProfile.name}</Text>
-            <TouchableOpacity onPress={() => handleEdit('name')}>
-              <Icon name="edit" size={20} color="#128C7E" />
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.profileItem}>
-          <Text style={styles.label}>Phone</Text>
-          <View style={styles.valueContainer}>
-            <Text style={styles.value}>
-              {formatPhoneNumber(userProfile.phoneNumber)}
-            </Text>
-            <Icon name="lock" size={20} color="#999" />
+        <View style={styles.profileSection}>
+          <View style={styles.profileItem}>
+            <Text style={styles.label}>Name</Text>
+            <View style={styles.valueContainer}>
+              <Text style={styles.value}>{userProfile.name}</Text>
+              <TouchableOpacity onPress={() => handleEdit('name')}>
+                <Icon name="edit" size={20} color="#128C7E" />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.profileItem}>
-          <Text style={styles.label}>Occupation</Text>
-          <View style={styles.valueContainer}>
-            <Text style={styles.value}>{userProfile.occupation}</Text>
-            <Icon name="lock" size={20} color="#999" />
-          </View>
-        </View>
-
-        <View style={styles.profileItem}>
-          <Text style={styles.label}>Language</Text>
-          <View style={styles.valueContainer}>
-            <Text style={styles.value}>{userProfile.language || 'Hindi'}</Text>
-            <TouchableOpacity onPress={() => handleEdit('language')}>
-              <Icon name="edit" size={20} color="#128C7E" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.profileItem}>
-          <Text style={styles.label}>Gender</Text>
-          <View style={styles.valueContainer}>
-            <Text style={styles.value}>{userProfile.gender || 'Not specified'}</Text>
-            <TouchableOpacity onPress={() => handleEdit('gender')}>
-              <Icon name="edit" size={20} color="#128C7E" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={[styles.profileItem, styles.locationItem]}>
-          <Text style={styles.label}>Location</Text>
-          <View style={styles.valueContainer}>
-            <View style={styles.locationValueContainer}>
-              <Icon name="location-on" size={20} color="#128C7E" style={styles.locationIcon} />
-              <Text style={[styles.value, styles.locationValue]}>
-                {userProfile.location?.address || 'Set your location'}
+          <View style={styles.profileItem}>
+            <Text style={styles.label}>Phone</Text>
+            <View style={styles.valueContainer}>
+              <Text style={styles.value}>
+                {formatPhoneNumber(userProfile.phoneNumber)}
               </Text>
+              <Icon name="lock" size={20} color="#999" />
             </View>
-            <TouchableOpacity 
-              onPress={() => handleEdit('location')}
-              style={styles.editButton}
-            >
-              <Icon name="edit" size={20} color="#128C7E" />
-            </TouchableOpacity>
           </View>
+
+          <View style={styles.profileItem}>
+            <Text style={styles.label}>Occupation</Text>
+            <View style={styles.valueContainer}>
+              <Text style={styles.value}>{userProfile.occupation}</Text>
+              <Icon name="lock" size={20} color="#999" />
+            </View>
+          </View>
+
+          <View style={styles.profileItem}>
+            <Text style={styles.label}>Language</Text>
+            <View style={styles.valueContainer}>
+              <Text style={styles.value}>{userProfile.language || 'Hindi'}</Text>
+              <TouchableOpacity onPress={() => handleEdit('language')}>
+                <Icon name="edit" size={20} color="#128C7E" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.profileItem}>
+            <Text style={styles.label}>Gender</Text>
+            <View style={styles.valueContainer}>
+              <Text style={styles.value}>{userProfile.gender || 'Not specified'}</Text>
+              <TouchableOpacity onPress={() => handleEdit('gender')}>
+                <Icon name="edit" size={20} color="#128C7E" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={[styles.profileItem, styles.locationItem]}>
+            <Text style={styles.label}>Location</Text>
+            <View style={styles.valueContainer}>
+              <View style={styles.locationValueContainer}>
+                <Icon name="location-on" size={20} color="#128C7E" style={styles.locationIcon} />
+                <Text style={[styles.value, styles.locationValue]}>
+                  {userProfile.location?.address || 'Set your location'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => handleEdit('location')}
+                style={styles.editButton}
+              >
+                <Icon name="edit" size={20} color="#128C7E" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.deleteAccountLink} 
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.deleteAccountText}>Delete my account</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Icon name="logout" size={20} color="#fff" />
@@ -318,10 +355,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  scrollView: {
+    flex: 1,
+  },
   header: {
     backgroundColor: '#128C7E',
     padding: 16,
     paddingTop: 60,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     color: '#fff',
@@ -367,17 +410,17 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   profileSection: {
-    padding: 12, // Reduced padding
-    paddingBottom: 80, // Add bottom padding to ensure content is visible above logout button
+    padding: 12,
+    paddingBottom: 20,
     flex: 1,
   },
   profileItem: {
-    marginBottom: 16, // Reduced from 24
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 4, // Reduced from 8
+    marginBottom: 4,
   },
   valueContainer: {
     flexDirection: 'row',
@@ -385,7 +428,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    paddingBottom: 6, // Reduced from 8
+    paddingBottom: 6,
   },
   value: {
     fontSize: 16,
@@ -437,6 +480,16 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#fff',
   },
+  deleteAccountLink: {
+    alignSelf: 'center',
+    marginTop: 10,
+    padding: 8,
+  },
+  deleteAccountText: {
+    color: '#dc3545',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
   logoutButton: {
     backgroundColor: '#ff4444',
     flexDirection: 'row',
@@ -445,11 +498,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginHorizontal: 20,
-    marginBottom: 16, // Reduced from 20
-    position: 'absolute', // Changed back to absolute
-    bottom: 0, // Position at bottom
-    left: 0,
-    right: 0,
+    marginBottom: 20,
   },
   logoutButtonText: {
     color: '#fff',
@@ -480,9 +529,9 @@ const styles = StyleSheet.create({
   },
   locationItem: {
     backgroundColor: '#f8f8f8',
-    padding: 10, // Reduced from 12
+    padding: 10,
     borderRadius: 8,
-    marginBottom: 16, // Reduced from 24
+    marginBottom: 16,
   },
   locationValueContainer: {
     flexDirection: 'row',
