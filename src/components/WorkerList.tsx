@@ -32,20 +32,19 @@ interface WorkerListProps {
 }
 
 export const WorkerList: React.FC<WorkerListProps> = ({ workers, onCall, userType }) => {
-  const renderRatingStars = (rating: number) => {
-    return (
-      <View style={styles.ratingContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
+  const renderRatingStars = (rating: number) => (
+    <View style={styles.ratingContainer}>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <View key={index}>
           <Icon
-            key={star}
             name="star"
             size={16}
-            color={star <= rating ? '#FFD700' : '#D3D3D3'}
+            color={index < rating ? '#FFD700' : '#D3D3D3'}
           />
-        ))}
-      </View>
-    );
-  };
+        </View>
+      ))}
+    </View>
+  );
 
   const renderWorkerCard = ({ item }: { item: Worker }) => (
     <View style={styles.workerCard}>

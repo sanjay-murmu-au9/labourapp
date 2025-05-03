@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<svg
+  width="108"
+  height="108"
+  viewBox="0 0 108 108"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Background Circle -->
+  <circle cx="54" cy="54" r="54" fill="#128C7E" />
+
+  <!-- Worker Icon -->
+  <g transform="translate(27, 27) scale(0.5)">
+    <!-- Hard Hat -->
+    <path
+      d="M54 30 C 49 30, 44 35, 44 40 L 44 43 L 64 43 L 64 40 C 64 35, 59 30, 54 30"
+      fill="#FFD700"
+    />
+
+    <!-- Face -->
+    <circle cx="54" cy="35" r="7" fill="#FFFFFF" />
+
+    <!-- Body -->
+    <path
+      d="M34 65 C34 65 34 55 54 55 C74 55 74 65 74 65 L74 85 L34 85 Z"
+      fill="#FFFFFF"
+    />
+
+    <!-- Tools -->
+    <path
+      d="M29 70 L39 70"
+      stroke="#FFD700"
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+    <path
+      d="M69 70 L79 70"
+      stroke="#FFD700"
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+  </g>
+</svg>

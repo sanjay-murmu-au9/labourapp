@@ -18,10 +18,14 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.shaunjay.LabourApp"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2126dee5-1219-4d7b-87d5-0a202917a81c"
       }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": ["expo-font"]
   }
 }

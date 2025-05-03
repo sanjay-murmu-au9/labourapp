@@ -118,6 +118,16 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       location: 'Kanke, Ranchi',
       distance: 4.0,
     },
+    {
+      id: '5',
+      name: 'Sanjay Murmu',
+      occupation: 'LABOUR',
+      experience: '3 Years',
+      rating: 2.5,
+      phone: '+918969164624',
+      location: 'Dumka, Jharkhand',
+      distance: 1.4,
+    },
   ];
 
   const filteredJobs = selectedFilter === 'ALL'

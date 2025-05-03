@@ -1,6 +1,7 @@
-const { createCanvas } = require('canvas');
+const { createCanvas, loadImage } = require('canvas');
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 
 // Icon sizes needed for different platforms
 const ICON_SIZES = [
@@ -14,78 +15,36 @@ const ICON_SIZES = [
     48,   // Android
 ];
 
-function drawIcon(size) {
-    const canvas = createCanvas(size, size);
-    const ctx = canvas.getContext('2d');
-
-    // Background
-    ctx.fillStyle = '#128C7E';
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Scale everything based on size
-    const scale = size / 1024;
-    ctx.scale(scale, scale);
-
-    // Person shape
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(512, 350, 150, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Body
-    ctx.beginPath();
-    ctx.moveTo(312, 600);
-    ctx.bezierCurveTo(312, 500, 712, 500, 712, 600);
-    ctx.lineTo(712, 800);
-    ctx.lineTo(312, 800);
-    ctx.closePath();
-    ctx.fill();
-
-    // Tools
-    ctx.lineWidth = 20;
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.fillStyle = '#FFFFFF';
-
-    // Left tool
-    ctx.beginPath();
-    ctx.moveTo(400, 350);
-    ctx.lineTo(350, 250);
-    ctx.lineTo(450, 300);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Right tool
-    ctx.beginPath();
-    ctx.moveTo(624, 350);
-    ctx.lineTo(674, 250);
-    ctx.lineTo(574, 300);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    return canvas;
+async function convertSvgToPng(svgPath, size) {
+    const svgBuffer = fs.readFileSync(svgPath);
+    const pngBuffer = await sharp(svgBuffer)
+        .resize(size, size)
+        .png()
+        .toBuffer();
+    return pngBuffer;
 }
 
-// Ensure the assets directory exists
-const assetsDir = path.join(__dirname, '../assets');
-if (!fs.existsSync(assetsDir)) {
-    fs.mkdirSync(assetsDir);
+async function generateIcons() {
+    // Ensure the assets directory exists
+    const assetsDir = path.join(__dirname, '../assets');
+    if (!fs.existsSync(assetsDir)) {
+        fs.mkdirSync(assetsDir);
+    }
+
+    // Convert adaptive icon
+    const adaptiveIconPath = path.join(assetsDir, 'adaptive-icon.svg');
+    const adaptiveIconPng = await convertSvgToPng(adaptiveIconPath, 512);
+    fs.writeFileSync(path.join(assetsDir, 'adaptive-icon.png'), adaptiveIconPng);
+
+    // Also use it for the main icon
+    fs.writeFileSync(path.join(assetsDir, 'icon.png'), adaptiveIconPng);
+
+    // Convert splash icon
+    const splashIconPath = path.join(assetsDir, 'splash-icon.svg');
+    const splashIconPng = await convertSvgToPng(splashIconPath, 1024);
+    fs.writeFileSync(path.join(assetsDir, 'splash-icon.png'), splashIconPng);
+
+    console.log('Icons generated successfully from SVG files!');
 }
 
-// Generate icons for all sizes
-ICON_SIZES.forEach(size => {
-    const canvas = drawIcon(size);
-    const buffer = canvas.toBuffer('image/png');
-
-    if (size === 1024) {
-        fs.writeFileSync(path.join(assetsDir, 'icon.png'), buffer);
-    }
-    if (size === 512) {
-        fs.writeFileSync(path.join(assetsDir, 'adaptive-icon.png'), buffer);
-    }
-});
-
-console.log('Icons generated successfully!');
+generateIcons().catch(console.error);
