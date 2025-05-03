@@ -87,6 +87,9 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       phone: '+919876543210',
       location: 'Ranchi, Jharkhand',
       distance: 2.5,
+      avatar: 'https://images.unsplash.com/photo-1590086783191-a0694c7d1e6e?q=80&w=200&h=200',
+      totalJobs: 45,
+      activeMonths: 8
     },
     {
       id: '2',
@@ -97,6 +100,9 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       phone: '+919876543211',
       location: 'Hatia, Ranchi',
       distance: 3.2,
+      avatar: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200&h=200',
+      totalJobs: 120,
+      activeMonths: 12
     },
     {
       id: '3',
@@ -107,6 +113,9 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       phone: '+919876543212',
       location: 'Doranda, Ranchi',
       distance: 1.8,
+      avatar: 'https://images.unsplash.com/photo-1506863530036-1efeddceb993?q=80&w=200&h=200',
+      totalJobs: 28,
+      activeMonths: 5
     },
     {
       id: '4',
@@ -117,17 +126,23 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       phone: '+919876543213',
       location: 'Kanke, Ranchi',
       distance: 4.0,
+      avatar: 'https://images.unsplash.com/photo-1618077360395-f3068be8e001?q=80&w=200&h=200',
+      totalJobs: 80,
+      activeMonths: 10
     },
     {
       id: '5',
       name: 'Sanjay Murmu',
       occupation: 'LABOUR',
       experience: '3 Years',
-      rating: 2.5,
+      rating: 4.5,
       phone: '+918969164624',
       location: 'Dumka, Jharkhand',
       distance: 1.4,
-    },
+      avatar: 'https://images.unsplash.com/photo-1569493086584-33e0b36f3145?q=80&w=200&h=200',
+      totalJobs: 52,
+      activeMonths: 7
+    }
   ];
 
   const filteredJobs = selectedFilter === 'ALL'

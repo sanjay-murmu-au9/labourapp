@@ -21,7 +21,7 @@ export default function App() {
         // Check for existing user by device ID
         const user = await getCurrentUser();
         setInitialUser(user);
-        
+
         // Add some delay to show splash screen
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (e) {

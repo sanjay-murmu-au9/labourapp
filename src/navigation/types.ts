@@ -2,6 +2,7 @@ export type UserProfile = {
   name: string;
   phoneNumber: string;
   occupation: string;
+  profileImage?: string; // URI of the profile image
   location?: {
     address: string;
     coordinates: {

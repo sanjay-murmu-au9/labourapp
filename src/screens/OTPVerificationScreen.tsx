@@ -36,7 +36,7 @@ const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({ route, na
     if (otp.length === OTP_LENGTH) {
       // Check if user exists in AsyncStorage
       const existingUser = await checkExistingUser(phoneNumber);
-      
+
       if (existingUser && (existingUser.occupation === "I'M LABOUR" || existingUser.occupation === "I'M MISTRY")) {
         // If user exists and is a Labour/Mistry, navigate directly to Jobs screen
         navigation.replace('Jobs', { userProfile: existingUser });

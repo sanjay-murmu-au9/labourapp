@@ -12,38 +12,38 @@ const ChatListScreen: React.FC<ChatListScreenProps> = ({ route, navigation }) =>
   const chats: ChatUser[] = [
     {
       id: '1',
-      name: 'John Doe',
+      name: 'Rajesh Kumar',
       message: 'Hey, are you available for work?',
       time: '10:30 AM',
-      avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+      avatar: 'https://images.unsplash.com/photo-1590086783191-a0694c7d1e6e?q=80&w=200&h=200',
     },
     {
       id: '2',
-      name: 'Alice Smith',
+      name: 'Sunil Mistry',
       message: 'Need a carpenter for tomorrow',
       time: '9:45 AM',
-      avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+      avatar: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200&h=200',
     },
     {
       id: '3',
-      name: 'Bob Wilson',
+      name: 'Amit Singh',
       message: 'How much do you charge per hour?',
       time: 'Yesterday',
-      avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
+      avatar: 'https://images.unsplash.com/photo-1506863530036-1efeddceb993?q=80&w=200&h=200',
     },
     {
       id: '4',
-      name: 'Sarah Johnson',
+      name: 'Raju Sharma',
       message: 'The work was great, thank you!',
       time: 'Yesterday',
-      avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
+      avatar: 'https://images.unsplash.com/photo-1618077360395-f3068be8e001?q=80&w=200&h=200',
     },
     {
       id: '5',
-      name: 'Mike Brown',
+      name: 'Sanjay Murmu',
       message: 'Are you free this weekend?',
       time: 'Yesterday',
-      avatar: 'https://randomuser.me/api/portraits/men/5.jpg',
+      avatar: 'https://images.unsplash.com/photo-1569493086584-33e0b36f3145?q=80&w=200&h=200',
     }
   ];
 

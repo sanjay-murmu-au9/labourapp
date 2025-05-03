@@ -11,7 +11,7 @@ const STORAGE_KEYS = {
 export const storeUserProfile = async (userProfile: UserProfile) => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(userProfile));
-    
+
     // Store in registered users list
     const existingUsers = await getRegisteredUsers();
     const updatedUsers = existingUsers.filter(user => user.phoneNumber !== userProfile.phoneNumber);

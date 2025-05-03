@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { Icon } from 'react-native-elements';
 import { storeUserProfile, logout } from '../utils/storage';
+import * as ImagePicker from 'expo-image-picker';
 
 type UserDetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'UserDetails'>;
 
@@ -18,7 +19,6 @@ interface EditModalProps {
 const EditModal: React.FC<EditModalProps> = ({ visible, onClose, onSave, value: initialValue, title }) => {
   const [value, setValue] = useState(initialValue);
 
-  // Reset value when modal reopens with new initialValue
   useEffect(() => {
     setValue(initialValue);
   }, [initialValue]);
@@ -69,6 +69,37 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
   const [userProfile, setUserProfile] = useState(route.params.userProfile);
   const [editField, setEditField] = useState<'name' | 'location' | null>(null);
 
+  useEffect(() => {
+    (async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Sorry, we need camera roll permissions to upload profile pictures!');
+      }
+    })();
+  }, []);
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled) {
+        const updatedProfile = {
+          ...userProfile,
+          profileImage: result.assets[0].uri
+        };
+        setUserProfile(updatedProfile);
+        await storeUserProfile(updatedProfile);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
+    }
+  };
+
   const handleEdit = (field: 'name' | 'location') => {
     setEditField(field);
   };
@@ -83,9 +114,8 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
           ? { address: value }
           : value
       };
-      
+
       setUserProfile(updatedProfile);
-      // Store updated profile in AsyncStorage
       await storeUserProfile(updatedProfile);
     }
   };
@@ -123,6 +153,24 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
 
   return (
     <View style={styles.container}>
+      <View style={styles.profileImageContainer}>
+        <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
+          {userProfile.profileImage ? (
+            <Image 
+              source={{ uri: userProfile.profileImage }} 
+              style={styles.profileImage} 
+            />
+          ) : (
+            <View style={styles.defaultImageContainer}>
+              <Icon name="person" size={50} color="#128C7E" />
+            </View>
+          )}
+          <View style={styles.editImageButton}>
+            <Icon name="camera-alt" size={20} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.profileSection}>
         <View style={styles.profileItem}>
           <Text style={styles.label}>Name</Text>
@@ -201,6 +249,44 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  profileImageContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  imageWrapper: {
+    position: 'relative',
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#128C7E',
+  },
+  defaultImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#128C7E',
+  },
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#128C7E',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   profileSection: {
     padding: 20,
