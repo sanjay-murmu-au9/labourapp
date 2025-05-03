@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { LocationIllustration } from '../components/LocationIllustration';
+import { storeUserProfile } from '../utils/storage';
 
 type LocationScreenProps = NativeStackScreenProps<RootStackParamList, 'Location'>;
 
@@ -50,20 +51,21 @@ export const LocationScreen: React.FC<LocationScreenProps> = ({ route, navigatio
         const fullAddress = `${fallbackStreet}, ${city}, ${region}, ${postalCode}`;
         setAddress(fullAddress);
 
-        navigation.replace('Jobs', {
-          userProfile: {
-            name: userProfile.name,
-            phoneNumber: userProfile.phoneNumber,
-            occupation: userProfile.occupation,
-            location: {
-              address: fullAddress,
-              coordinates: {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-              },
+        const updatedProfile = {
+          ...userProfile,
+          location: {
+            address: fullAddress,
+            coordinates: {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
             },
           },
-        });
+        };
+
+        // Store user profile in AsyncStorage
+        await storeUserProfile(updatedProfile);
+
+        navigation.replace('Jobs', { userProfile: updatedProfile });
       } else {
         setErrorMsg('Unable to fetch address. Please try again later.');
       }
@@ -74,14 +76,10 @@ export const LocationScreen: React.FC<LocationScreenProps> = ({ route, navigatio
     }
   };
 
-  const handleSkip = () => {
-    navigation.replace('Jobs', {
-      userProfile: {
-        name: userProfile.name,
-        phoneNumber: userProfile.phoneNumber,
-        occupation: userProfile.occupation,
-      },
-    });
+  const handleSkip = async () => {
+    // Store user profile without location
+    await storeUserProfile(userProfile);
+    navigation.replace('Jobs', { userProfile });
   };
 
   return (

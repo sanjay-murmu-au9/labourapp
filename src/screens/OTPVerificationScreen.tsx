@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { checkExistingUser } from '../utils/storage';
 
 const WHATSAPP_GREEN = '#128C7E';
 const OTP_LENGTH = 6;
@@ -31,15 +32,22 @@ const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({ route, na
     return () => clearInterval(interval);
   }, [timer]);
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.length === OTP_LENGTH) {
-      // TODO: Add actual OTP verification
-      navigation.replace('UserName', { phoneNumber });
+      // Check if user exists in AsyncStorage
+      const existingUser = await checkExistingUser(phoneNumber);
+      
+      if (existingUser && (existingUser.occupation === "I'M LABOUR" || existingUser.occupation === "I'M MISTRY")) {
+        // If user exists and is a Labour/Mistry, navigate directly to Jobs screen
+        navigation.replace('Jobs', { userProfile: existingUser });
+      } else {
+        // If new user, proceed with registration flow
+        navigation.replace('UserName', { phoneNumber });
+      }
     }
   };
 
   const handleResendOTP = () => {
-    // TODO: Implement resend OTP logic
     setTimer(30);
     setOtp('');
   };

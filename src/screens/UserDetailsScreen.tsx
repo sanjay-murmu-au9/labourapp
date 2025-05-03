@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { Icon } from 'react-native-elements';
+import { storeUserProfile, logout } from '../utils/storage';
 
 type UserDetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'UserDetails'>;
 
@@ -72,22 +73,52 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
     setEditField(field);
   };
 
-  const handleSave = (value: string) => {
+  const handleSave = async (value: string) => {
     if (editField) {
-      setUserProfile(prev => ({
-        ...prev,
-        [editField]: editField === 'location' && prev.location
-          ? { ...prev.location, address: value }
+      const updatedProfile = {
+        ...userProfile,
+        [editField]: editField === 'location' && userProfile.location
+          ? { ...userProfile.location, address: value }
           : editField === 'location'
           ? { address: value }
           : value
-      }));
+      };
+      
+      setUserProfile(updatedProfile);
+      // Store updated profile in AsyncStorage
+      await storeUserProfile(updatedProfile);
     }
   };
 
   const formatPhoneNumber = (phone: string) => {
     if (!phone) return '';
     return phone.startsWith('+91') ? phone : `+91 ${phone.slice(0, 5)}-${phone.slice(5)}`;
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            const success = await logout();
+            if (success) {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'PhoneLogin' }],
+              });
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -133,6 +164,11 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
           </View>
         )}
       </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Icon name="logout" size={20} color="#fff" />
+        <Text style={styles.logoutButtonText}>Logout</Text>
+      </TouchableOpacity>
 
       <EditModal
         visible={!!editField}
@@ -234,6 +270,23 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
+  },
+  logoutButton: {
+    backgroundColor: '#ff4444',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginTop: 'auto',
+    marginBottom: 20,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 });
 

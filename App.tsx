@@ -4,6 +4,8 @@ import { AppNavigator } from './src/navigation/AppNavigator';
 import * as SplashScreen from 'expo-splash-screen';
 import { View } from 'react-native';
 import { CustomSplashScreen } from './src/components/CustomSplashScreen';
+import { getCurrentUser } from './src/utils/storage';
+import { UserProfile } from './src/navigation/types';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync()
@@ -11,10 +13,15 @@ SplashScreen.preventAutoHideAsync()
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [initialUser, setInitialUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     async function prepare() {
       try {
+        // Check for existing user by device ID
+        const user = await getCurrentUser();
+        setInitialUser(user);
+        
         // Add some delay to show splash screen
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (e) {
@@ -39,7 +46,7 @@ export default function App() {
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
-        <AppNavigator />
+        <AppNavigator initialUser={initialUser} />
       </SafeAreaProvider>
     </View>
   );
