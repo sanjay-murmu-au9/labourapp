@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   TextInput,
   Linking,
   Platform,
-  Alert 
+  Alert
 } from 'react-native';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -115,7 +115,7 @@ export const LocationScreen: React.FC<LocationScreenProps> = ({ route, navigatio
 
   useEffect(() => {
     getLocation();
-    
+
     const timer = setTimeout(() => {
       setShowSkip(true);
     }, 5000);
@@ -164,7 +164,7 @@ export const LocationScreen: React.FC<LocationScreenProps> = ({ route, navigatio
             numberOfLines={3}
             textAlignVertical="top"
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.submitButton, manualAddress.trim().length < 5 && styles.submitButtonDisabled]}
             onPress={handleManualSubmit}
             disabled={manualAddress.trim().length < 5}
@@ -187,12 +187,12 @@ export const LocationScreen: React.FC<LocationScreenProps> = ({ route, navigatio
             pulseEnabled={!location && !isLocating}
           />
           <Text style={styles.messageText}>
-            {isLocating 
-              ? 'Fetching your location...' 
-              : errorMsg 
-                ? errorMsg 
-                : location 
-                  ? address 
+            {isLocating
+              ? 'Fetching your location...'
+              : errorMsg
+                ? errorMsg
+                : location
+                  ? address
                   : 'Preparing location services...'}
           </Text>
         </View>

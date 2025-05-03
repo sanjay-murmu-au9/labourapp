@@ -313,8 +313,8 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={styles.deleteAccountLink} 
+          <TouchableOpacity
+            style={styles.deleteAccountLink}
             onPress={handleDeleteAccount}
           >
             <Text style={styles.deleteAccountText}>Delete my account</Text>
