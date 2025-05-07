@@ -106,9 +106,10 @@ const EditModal: React.FC<EditModalProps> = ({
 const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation }) => {
   const [userProfile, setUserProfile] = useState({
     ...route.params.userProfile,
-    gender: route.params.userProfile.gender || 'Male' // Set default gender as Male
+    gender: route.params.userProfile.gender || 'Male', // Set default gender as Male
+    age: route.params.userProfile.age || 18 // Set default age as 18
   });
-  const [editField, setEditField] = useState<'name' | 'location' | 'language' | 'gender' | null>(null);
+  const [editField, setEditField] = useState<'name' | 'location' | 'language' | 'gender' | 'age' | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -141,12 +142,21 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
     }
   };
 
-  const handleEdit = (field: 'name' | 'location' | 'language' | 'gender') => {
+  const handleEdit = (field: 'name' | 'location' | 'language' | 'gender' | 'age') => {
     setEditField(field);
   };
 
   const handleSave = async (value: string) => {
     if (editField) {
+      // Add age validation
+      if (editField === 'age') {
+        const age = parseInt(value);
+        if (isNaN(age) || age < 18) {
+          Alert.alert('Invalid Age', 'Age must be 18 or above');
+          return;
+        }
+      }
+
       const updatedProfile = {
         ...userProfile,
         [editField]: editField === 'location'
@@ -158,7 +168,7 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
                 longitude: 78.9629,
               }
             }
-          : value
+          : editField === 'age' ? parseInt(value) : value
       };
 
       setUserProfile(updatedProfile);
@@ -295,6 +305,16 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
             </View>
           </View>
 
+          <View style={styles.profileItem}>
+            <Text style={styles.label}>Age</Text>
+            <View style={styles.valueContainer}>
+              <Text style={styles.value}>{userProfile.age || 'Not specified'}</Text>
+              <TouchableOpacity onPress={() => handleEdit('age')}>
+                <Icon name="edit" size={20} color="#128C7E" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View style={[styles.profileItem, styles.locationItem]}>
             <Text style={styles.label}>Location</Text>
             <View style={styles.valueContainer}>
@@ -338,12 +358,14 @@ const UserDetailsScreen: React.FC<UserDetailsScreenProps> = ({ route, navigation
             ? userProfile.language || 'Hindi'
             : editField === 'gender'
             ? userProfile.gender || ''
+            : editField === 'age'
+            ? userProfile.age?.toString() || ''
             : editField
               ? userProfile[editField] || ''
               : ''
         }
         title={`Edit ${editField?.charAt(0).toUpperCase()}${editField?.slice(1) || ''}`}
-        type={editField === 'gender' ? 'select' : 'text'}
+        type={editField === 'gender' ? 'select' : editField === 'age' ? 'text' : 'text'}
         options={editField === 'gender' ? ['Male', 'Female', 'Other'] : undefined}
       />
     </View>

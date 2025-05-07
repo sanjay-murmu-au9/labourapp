@@ -282,3 +282,13 @@ export const getAppSettings = async (): Promise<Record<string, any> | null> => {
     return null;
   }
 };
+
+export const deleteAccount = async (phoneNumber: string): Promise<boolean> => {
+  try {
+    await clearStorage();
+    return true;
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return false;
+  }
+};

@@ -4,6 +4,7 @@ export type UserProfile = {
   name: string;
   phoneNumber: string;
   occupation: typeof OCCUPATIONS[keyof typeof OCCUPATIONS];
+  age?: number;  // Added age field
   profileImage?: string; // URI of the profile image
   language?: string;
   gender?: 'Male' | 'Female' | 'Other';
