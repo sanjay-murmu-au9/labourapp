@@ -2,18 +2,19 @@ import { setupGlobalErrorHandlers, withErrorHandling } from './src/utils/errorHa
 import './src/utils/hermesErrorHandler';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AppNavigator } from './src/navigation/AppNavigator';
-import * as SplashScreen from 'expo-splash-screen';
 import { View, LogBox } from 'react-native';
-import { CustomSplashScreen } from './src/components/CustomSplashScreen';
-import { getCurrentUser } from './src/utils/storage';
-import { UserProfile } from './src/navigation/types';
 import { Provider } from 'react-redux';
-import { store } from './src/store';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import { AppNavigator } from './src/navigation/AppNavigator';
+import { store } from './src/store';
 import { queryClient } from './src/services/api/queryClient';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { CustomSplashScreen } from './src/components/CustomSplashScreen';
+import { UserProfile } from './src/navigation/types';
+import { getCurrentUser } from './src/utils/storage';
+import { OCCUPATIONS } from './src/utils/constants';
 
 // Initialize error handling as early as possible
 setupGlobalErrorHandlers();
@@ -38,10 +39,24 @@ export default function App() {
   // Use the withErrorHandling wrapper for async operations
   useEffect(() => {
     const prepare = withErrorHandling(async () => {
-      const user = await getCurrentUser();
-      setInitialUser(user);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsLoading(false);
+      try {
+        // Get stored user data
+        const user = await getCurrentUser();
+        if (user) {
+          // Validate user data
+          if (user.phoneNumber && user.occupation && (
+            user.occupation === OCCUPATIONS.LABOUR ||
+            user.occupation === OCCUPATIONS.MISTRY ||
+            user.occupation === OCCUPATIONS.PROVIDER
+          )) {
+            setInitialUser(user);
+          }
+        }
+      } finally {
+        // Add a small delay to ensure smooth transition
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsLoading(false);
+      }
     });
 
     prepare();

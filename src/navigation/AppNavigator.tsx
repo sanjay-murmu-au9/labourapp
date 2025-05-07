@@ -12,6 +12,7 @@ import UserDetailsScreen from '../screens/UserDetailsScreen';
 import JobsScreen from '../screens/JobsScreen';
 import { JobsProviderScreen } from '../screens/JobsProviderScreen';
 import { RootStackParamList, UserProfile } from './types';
+import { OCCUPATIONS } from '../utils/constants';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -20,10 +21,16 @@ interface AppNavigatorProps {
 }
 
 export const AppNavigator: React.FC<AppNavigatorProps> = ({ initialUser }) => {
+  // Determine initial route based on user state
+  const getInitialRoute = (): keyof RootStackParamList => {
+    if (!initialUser) return 'PhoneLogin';
+    return 'Jobs'; // All users go to Jobs screen
+  };
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={initialUser ? "Jobs" : "PhoneLogin"}
+        initialRouteName={getInitialRoute()}
         screenOptions={{
           headerStyle: {
             backgroundColor: '#128C7E',
@@ -69,6 +76,7 @@ export const AppNavigator: React.FC<AppNavigatorProps> = ({ initialUser }) => {
           name="JobsProvider"
           component={JobsProviderScreen}
           options={{ headerShown: false }}
+          initialParams={initialUser ? { userProfile: initialUser } : undefined}
         />
         <Stack.Screen
           name="ChatList"

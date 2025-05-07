@@ -2,12 +2,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProfile } from '../navigation/types';
 import * as Device from 'expo-device';
 import { Alert } from 'react-native';
+import { CacheManager } from './cache';
 
 const KEYS = {
   USER_PROFILE: 'user_profile',
   AUTH_TOKEN: 'auth_token',
   DEVICE_ID: 'device_id',
   APP_SETTINGS: 'app_settings',
+  LAST_LOGIN: 'last_login',
+};
+
+// Cache configuration
+const CACHE_CONFIG = {
+  userProfile: {
+    expiryTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    retryAttempts: 3,
+  }
 };
 
 const MAX_RETRIES = 3;
@@ -125,7 +135,7 @@ const encryptData = async (data: any): Promise<string> => {
   }
 };
 
-export const storeUserProfile = async (data: any) => {
+export const storeUserProfile = async (data: UserProfile) => {
   try {
     // Validate data is serializable
     JSON.stringify(data);
@@ -137,6 +147,14 @@ export const storeUserProfile = async (data: any) => {
 
     const encryptedData = await encryptData(data);
     await AsyncStorage.setItem(KEYS.USER_PROFILE, encryptedData);
+
+    // Store last login timestamp
+    await AsyncStorage.setItem(KEYS.LAST_LOGIN, Date.now().toString());
+
+    // Cache the user profile
+    await CacheManager.set(KEYS.USER_PROFILE, data, {
+      expiryTime: CACHE_CONFIG.userProfile.expiryTime
+    });
   } catch (error: any) {
     console.error('Storage error:', error);
     if (error.message.includes('circular') || error.message.includes('JSON')) {
@@ -148,15 +166,46 @@ export const storeUserProfile = async (data: any) => {
 
 export const getCurrentUser = async (): Promise<UserProfile | null> => {
   try {
+    // Try to get from cache first
+    const cachedUser = await CacheManager.get<UserProfile>(KEYS.USER_PROFILE);
+    if (cachedUser) {
+      return cachedUser;
+    }
+
+    // If not in cache, get from storage
     const encryptedProfile = await safeAsyncStorage.getItem(KEYS.USER_PROFILE);
     if (!encryptedProfile) return null;
 
     const decryptedProfile = decrypt(encryptedProfile);
-    return JSON.parse(decryptedProfile);
+    const userProfile = JSON.parse(decryptedProfile);
+
+    // Cache the result for future use
+    await CacheManager.set(KEYS.USER_PROFILE, userProfile, {
+      expiryTime: CACHE_CONFIG.userProfile.expiryTime
+    });
+
+    return userProfile;
   } catch (error) {
     console.error('Error getting current user:', error);
     Alert.alert('Error', 'Failed to load user profile. Please try again.');
     return null;
+  }
+};
+
+export const logout = async (): Promise<boolean> => {
+  try {
+    // Clear user data but preserve device ID
+    const deviceId = await getDeviceId();
+    await safeAsyncStorage.clear();
+    await safeAsyncStorage.setItem(KEYS.DEVICE_ID, deviceId);
+
+    // Clear cache
+    await CacheManager.invalidate(KEYS.USER_PROFILE);
+    return true;
+  } catch (error) {
+    console.error('Logout error:', error);
+    Alert.alert('Error', 'Failed to logout. Please try again.');
+    return false;
   }
 };
 

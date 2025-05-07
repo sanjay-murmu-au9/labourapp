@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import { useDispatch } from 'react-redux';
 import { RootStackParamList, UserProfile } from '../navigation/types';
 import { storeUserProfile } from '../utils/storage';
-import { OCCUPATIONS } from '../utils/constants';
 
 const WHATSAPP_GREEN = '#128C7E';
 
-type LocationScreenProps = {
-  navigation: StackNavigationProp<RootStackParamList, 'Location'>;
-  route: { params: { userProfile: UserProfile } };
-};
+type LocationScreenProps = NativeStackScreenProps<RootStackParamList, 'Location'>;
 
 export const LocationScreen: React.FC<LocationScreenProps> = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);

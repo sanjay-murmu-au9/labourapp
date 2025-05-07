@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface CacheConfig {
-  expiryTime: number; // in milliseconds
+  expiryTime: number;
 }
 
 interface CacheItem<T> {
@@ -9,20 +9,9 @@ interface CacheItem<T> {
   timestamp: number;
 }
 
-interface RateLimitConfig {
-  maxRequests: number;
-  windowMs: number;
-}
-
-class CacheManager {
-  private static requestCounts: Map<string, number[]> = new Map();
+export class CacheManager {
   private static defaultConfig: CacheConfig = {
-    expiryTime: 5 * 60 * 1000, // 5 minutes
-  };
-
-  private static defaultRateLimit: RateLimitConfig = {
-    maxRequests: 50,
-    windowMs: 60 * 1000, // 1 minute
+    expiryTime: 24 * 60 * 60 * 1000, // 24 hours
   };
 
   static async set<T>(key: string, data: T, config?: Partial<CacheConfig>): Promise<void> {
@@ -67,47 +56,5 @@ class CacheManager {
     } catch (error) {
       console.error('Cache invalidate error:', error);
     }
-  }
-
-  static async invalidatePattern(pattern: string): Promise<void> {
-    try {
-      const keys = await AsyncStorage.getAllKeys();
-      const matchingKeys = keys.filter(key => key.includes(pattern));
-      await AsyncStorage.multiRemove(matchingKeys);
-    } catch (error) {
-      console.error('Cache pattern invalidate error:', error);
-    }
-  }
-
-  static canMakeRequest(endpoint: string, config?: Partial<RateLimitConfig>): boolean {
-    const finalConfig = { ...this.defaultRateLimit, ...config };
-    const now = Date.now();
-
-    // Get or initialize request timestamps for this endpoint
-    let timestamps = this.requestCounts.get(endpoint) || [];
-    timestamps = timestamps.filter(time => now - time < finalConfig.windowMs);
-
-    if (timestamps.length >= finalConfig.maxRequests) {
-      return false;
-    }
-
-    timestamps.push(now);
-    this.requestCounts.set(endpoint, timestamps);
-    return true;
-  }
-
-  static async wrap<T>(
-    key: string,
-    fetchFn: () => Promise<T>,
-    config?: Partial<CacheConfig>
-  ): Promise<T> {
-    // Try to get from cache first
-    const cached = await this.get<T>(key, config);
-    if (cached) return cached;
-
-    // If not in cache, fetch and store
-    const data = await fetchFn();
-    await this.set(key, data, config);
-    return data;
   }
 }
