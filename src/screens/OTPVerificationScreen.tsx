@@ -7,10 +7,13 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-import { checkExistingUser } from '../utils/storage';
+import { getCurrentUser } from '../utils/storage';
+import { withErrorHandling } from '../utils/errorHandler';
+import { OCCUPATIONS } from '../utils/constants';
 
 const WHATSAPP_GREEN = '#128C7E';
 const OTP_LENGTH = 6;
@@ -21,6 +24,7 @@ const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({ route, na
   const { phoneNumber } = route.params;
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(30);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -32,25 +36,32 @@ const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({ route, na
     return () => clearInterval(interval);
   }, [timer]);
 
-  const handleVerify = async () => {
-    if (otp.length === OTP_LENGTH) {
-      // Check if user exists in AsyncStorage
-      const existingUser = await checkExistingUser(phoneNumber);
+  const handleVerify = withErrorHandling(async () => {
+    if (otp.length !== OTP_LENGTH || isVerifying) return;
 
-      if (existingUser && (existingUser.occupation === "I'M LABOUR" || existingUser.occupation === "I'M MISTRY")) {
-        // If user exists and is a Labour/Mistry, navigate directly to Jobs screen
+    setIsVerifying(true);
+    try {
+      const existingUser = await getCurrentUser();
+
+      if (existingUser && (
+        existingUser.occupation === OCCUPATIONS.LABOUR ||
+        existingUser.occupation === OCCUPATIONS.MISTRY
+      )) {
         navigation.replace('Jobs', { userProfile: existingUser });
       } else {
-        // If new user, proceed with registration flow
         navigation.replace('UserName', { phoneNumber });
       }
+    } finally {
+      setIsVerifying(false);
     }
-  };
+  });
 
-  const handleResendOTP = () => {
+  const handleResendOTP = withErrorHandling(async () => {
+    if (timer > 0) return;
     setTimer(30);
     setOtp('');
-  };
+    // Add your OTP resend logic here
+  });
 
   return (
     <KeyboardAvoidingView
@@ -87,7 +98,7 @@ const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({ route, na
             otp.length === OTP_LENGTH && styles.verifyButtonActive
           ]}
           onPress={handleVerify}
-          disabled={otp.length !== OTP_LENGTH}
+          disabled={otp.length !== OTP_LENGTH || isVerifying}
         >
           <Text style={styles.verifyButtonText}>Verify</Text>
         </TouchableOpacity>

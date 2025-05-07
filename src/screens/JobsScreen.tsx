@@ -13,6 +13,7 @@ import { Icon } from 'react-native-elements';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { WorkerList } from '../components/WorkerList';
+import { OCCUPATIONS, JOB_TYPES } from '../utils/constants';
 
 const WHATSAPP_GREEN = '#128C7E';
 
@@ -30,13 +31,17 @@ interface Job {
 
 const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
   const { userProfile } = route.params;
-  const [selectedFilter, setSelectedFilter] = useState<string>('ALL');
   const [activeTab, setActiveTab] = useState<'jobs' | 'workers'>('jobs');
+  const [selectedType, setSelectedType] = useState<string>('ALL');
 
-  const isJobProvider = userProfile.occupation === "I NEED LABOUR/MISTRY";
-  const isWorkerOrMistry = ["I'M LABOUR", "I'M MISTRY"].includes(userProfile.occupation);
+  const isJobProvider = userProfile.occupation === OCCUPATIONS.PROVIDER;
+  const isWorkerOrMistry = (occupation: typeof OCCUPATIONS[keyof typeof OCCUPATIONS]): occupation is typeof OCCUPATIONS.LABOUR | typeof OCCUPATIONS.MISTRY => {
+    return occupation === OCCUPATIONS.LABOUR || occupation === OCCUPATIONS.MISTRY;
+  };
 
-  const jobTypes = ['ALL', 'MASONRY', 'CARPENTER', 'PAINTER', 'LABOUR'];
+  const isUserWorkerOrMistry = isWorkerOrMistry(userProfile.occupation);
+
+  const jobTypes = Object.values(JOB_TYPES);
 
   const jobs: Job[] = [
     {
@@ -46,7 +51,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       distance: 1,
       location: 'Construction Site',
       description: 'Need experienced mason for construction work',
-      type: 'MASONRY',
+      type: JOB_TYPES.MASONRY,
     },
     {
       id: '2',
@@ -55,7 +60,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       distance: 2,
       location: 'Residential Project',
       description: 'Skilled carpenter required for woodwork',
-      type: 'CARPENTER',
+      type: JOB_TYPES.CARPENTER,
     },
     {
       id: '3',
@@ -64,7 +69,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       distance: 3,
       location: 'Office Renovation',
       description: 'Professional painter needed for office renovation',
-      type: 'PAINTER',
+      type: JOB_TYPES.PAINTER,
     },
     {
       id: '4',
@@ -73,7 +78,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
       distance: 1.5,
       location: 'Building Site',
       description: 'General labour work at construction site',
-      type: 'LABOUR',
+      type: JOB_TYPES.LABOUR,
     },
   ];
 
@@ -81,7 +86,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
     {
       id: '1',
       name: 'Rajesh Kumar',
-      occupation: 'MASONRY',
+      occupation: JOB_TYPES.MASONRY,
       experience: '5 years',
       rating: 4.5,
       phone: '+919876543210',
@@ -94,7 +99,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
     {
       id: '2',
       name: 'Sunil Mistry',
-      occupation: 'CARPENTER',
+      occupation: JOB_TYPES.CARPENTER,
       experience: '8 years',
       rating: 4.8,
       phone: '+919876543211',
@@ -107,7 +112,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
     {
       id: '3',
       name: 'Amit Singh',
-      occupation: 'PAINTER',
+      occupation: JOB_TYPES.PAINTER,
       experience: '3 years',
       rating: 4.0,
       phone: '+919876543212',
@@ -120,7 +125,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
     {
       id: '4',
       name: 'Raju Sharma',
-      occupation: 'LABOUR',
+      occupation: JOB_TYPES.LABOUR,
       experience: '4 years',
       rating: 4.2,
       phone: '+919876543213',
@@ -133,7 +138,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
     {
       id: '5',
       name: 'Sanjay Murmu',
-      occupation: 'LABOUR',
+      occupation: JOB_TYPES.LABOUR,
       experience: '3 Years',
       rating: 4.5,
       phone: '+918969164624',
@@ -145,9 +150,9 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
     }
   ];
 
-  const filteredJobs = selectedFilter === 'ALL'
+  const filteredJobs = selectedType === 'ALL'
     ? jobs
-    : jobs.filter(job => job.type === selectedFilter);
+    : jobs.filter(job => job.type === selectedType);
 
   const handleApply = (jobId: string) => {
     console.log(`Applied for job ${jobId}`);
@@ -181,7 +186,7 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
         <Text style={styles.description}>{item.description}</Text>
       </View>
 
-      {isWorkerOrMistry && (
+      {isUserWorkerOrMistry && (
         <TouchableOpacity
           style={styles.applyButton}
           onPress={() => handleApply(item.id)}
@@ -242,14 +247,14 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
                   key={type}
                   style={[
                     styles.filterButton,
-                    selectedFilter === type && styles.filterButtonActive,
+                    selectedType === type && styles.filterButtonActive,
                   ]}
-                  onPress={() => setSelectedFilter(type)}
+                  onPress={() => setSelectedType(type)}
                 >
                   <Text
                     style={[
                       styles.filterButtonText,
-                      selectedFilter === type && styles.filterButtonTextActive,
+                      selectedType === type && styles.filterButtonTextActive,
                     ]}
                   >
                     {type}
@@ -269,8 +274,10 @@ const JobsScreen: React.FC<JobsScreenProps> = ({ route, navigation }) => {
 
       {isJobProvider && (
         <TouchableOpacity style={styles.fabButton} onPress={handlePostJob}>
-          <Icon name="add" size={24} color="#fff" />
-          <Text style={styles.fabText}>Post a Job</Text>
+          <View style={styles.fabContent}>
+            <Icon name="add" size={24} color="#fff" />
+            <Text style={styles.fabText}>Post a Job</Text>
+          </View>
         </TouchableOpacity>
       )}
     </View>
@@ -427,15 +434,19 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20,
     backgroundColor: WHATSAPP_GREEN,
-    borderRadius: 30,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    elevation: 4,
+    borderRadius: 28,
+    elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+    overflow: 'hidden',
+  },
+  fabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   fabText: {
     color: '#fff',

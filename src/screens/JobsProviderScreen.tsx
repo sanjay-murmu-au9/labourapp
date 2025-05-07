@@ -36,7 +36,10 @@ export const JobsProviderScreen: React.FC<JobsProviderScreenProps> = ({ route, n
     Alert.alert(
       'Success',
       'Job posted successfully!',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
+      [{
+        text: 'OK',
+        onPress: () => navigation.goBack()
+      }]
     );
   };
 

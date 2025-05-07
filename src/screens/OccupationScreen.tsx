@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { OCCUPATIONS } from '../utils/constants';
 
 const WHATSAPP_GREEN = '#128C7E';
 
@@ -16,12 +17,12 @@ type OccupationScreenProps = NativeStackScreenProps<RootStackParamList, 'Occupat
 const OccupationScreen: React.FC<OccupationScreenProps> = ({ route, navigation }) => {
   const { name, phoneNumber } = route.params;
 
-  const handleOptionPress = (selectedOccupation: string) => {
+  const handleOptionPress = (occupation: typeof OCCUPATIONS[keyof typeof OCCUPATIONS]) => {
     navigation.navigate('Location', {
       userProfile: {
         name,
         phoneNumber,
-        occupation: selectedOccupation,
+        occupation,
       },
     });
   };
@@ -36,7 +37,7 @@ const OccupationScreen: React.FC<OccupationScreenProps> = ({ route, navigation }
           {/* Labour Option */}
           <TouchableOpacity
             style={styles.optionCard}
-            onPress={() => handleOptionPress("I'M LABOUR")}
+            onPress={() => handleOptionPress(OCCUPATIONS.LABOUR)}
           >
             <View style={styles.optionContent}>
               <View style={styles.optionHeader}>
@@ -52,7 +53,7 @@ const OccupationScreen: React.FC<OccupationScreenProps> = ({ route, navigation }
           {/* Mistry Option */}
           <TouchableOpacity
             style={styles.optionCard}
-            onPress={() => handleOptionPress("I'M MISTRY")}
+            onPress={() => handleOptionPress(OCCUPATIONS.MISTRY)}
           >
             <View style={styles.optionContent}>
               <View style={styles.optionHeader}>
@@ -74,7 +75,7 @@ const OccupationScreen: React.FC<OccupationScreenProps> = ({ route, navigation }
           {/* Hiring Option */}
           <TouchableOpacity
             style={[styles.optionCard, styles.hiringCard]}
-            onPress={() => handleOptionPress("I NEED LABOUR/MISTRY")}
+            onPress={() => handleOptionPress(OCCUPATIONS.PROVIDER)}
           >
             <View style={styles.optionContent}>
               <View style={styles.optionHeader}>

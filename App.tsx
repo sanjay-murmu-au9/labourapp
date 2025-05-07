@@ -1,53 +1,76 @@
+import { setupGlobalErrorHandlers, withErrorHandling } from './src/utils/errorHandler';
+import './src/utils/hermesErrorHandler';
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import * as SplashScreen from 'expo-splash-screen';
-import { View } from 'react-native';
+import { View, LogBox } from 'react-native';
 import { CustomSplashScreen } from './src/components/CustomSplashScreen';
 import { getCurrentUser } from './src/utils/storage';
 import { UserProfile } from './src/navigation/types';
+import { Provider } from 'react-redux';
+import { store } from './src/store';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './src/services/api/queryClient';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+
+// Initialize error handling as early as possible
+setupGlobalErrorHandlers();
 
 // Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync()
-  .catch(console.warn);
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Error is already handled by global handler
+});
+
+// Ignore specific warnings
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state',
+  'Firebase Analytics is not supported in this environment',
+  'IndexedDB unavailable or restricted in this environment',
+  'Failed to fetch this Firebase app\'s measurement ID'
+]);
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [initialUser, setInitialUser] = useState<UserProfile | null>(null);
 
+  // Use the withErrorHandling wrapper for async operations
   useEffect(() => {
-    async function prepare() {
-      try {
-        // Check for existing user by device ID
-        const user = await getCurrentUser();
-        setInitialUser(user);
+    const prepare = withErrorHandling(async () => {
+      const user = await getCurrentUser();
+      setInitialUser(user);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setIsLoading(false);
+    });
 
-        // Add some delay to show splash screen
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsLoading(false);
-      }
-    }
     prepare();
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (!isLoading) {
-      await SplashScreen.hideAsync();
-    }
-  }, [isLoading]);
+  const onLayoutRootView = useCallback(
+    withErrorHandling(async () => {
+      if (!isLoading) {
+        await SplashScreen.hideAsync();
+      }
+    }),
+    [isLoading]
+  );
 
   if (isLoading) {
     return <CustomSplashScreen />;
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <SafeAreaProvider>
-        <AppNavigator initialUser={initialUser} />
-      </SafeAreaProvider>
-    </View>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+            <SafeAreaProvider>
+              <AppNavigator initialUser={initialUser} />
+            </SafeAreaProvider>
+          </View>
+        </QueryClientProvider>
+      </Provider>
+    </ErrorBoundary>
   );
 }

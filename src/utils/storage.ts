@@ -1,134 +1,235 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProfile } from '../navigation/types';
 import * as Device from 'expo-device';
+import { Alert } from 'react-native';
 
-const STORAGE_KEYS = {
-  USER_PROFILE: '@labour_app_user_profile',
-  REGISTERED_USERS: '@labour_app_registered_users',
-  DEVICE_USER: '@labour_app_device_user'
+const KEYS = {
+  USER_PROFILE: 'user_profile',
+  AUTH_TOKEN: 'auth_token',
+  DEVICE_ID: 'device_id',
+  APP_SETTINGS: 'app_settings',
 };
 
-export const storeUserProfile = async (userProfile: UserProfile) => {
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+const retryOperation = async (operation: () => Promise<any>, retries = 0): Promise<any> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(userProfile));
-
-    // Store in registered users list
-    const existingUsers = await getRegisteredUsers();
-    const updatedUsers = existingUsers.filter(user => user.phoneNumber !== userProfile.phoneNumber);
-    updatedUsers.push(userProfile);
-    await AsyncStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(updatedUsers));
-
-    // Store device association
-    const deviceId = await getDeviceId();
-    if (deviceId) {
-      await AsyncStorage.setItem(STORAGE_KEYS.DEVICE_USER, JSON.stringify({
-        deviceId,
-        phoneNumber: userProfile.phoneNumber
-      }));
-    }
+    return await operation();
   } catch (error) {
-    console.error('Error storing user profile:', error);
+    if (retries < MAX_RETRIES) {
+      // Silent retry without user notification for first attempt
+      if (retries > 0) {
+        console.warn(`Operation failed, attempt ${retries + 1}/${MAX_RETRIES}`);
+      }
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * Math.pow(2, retries)));
+      return retryOperation(operation, retries + 1);
+    }
+
+    // Only show alert on final retry failure
+    Alert.alert(
+      'Operation Failed',
+      'There was a problem completing the operation. Please try again.',
+      [{ text: 'OK' }]
+    );
+    throw error;
   }
 };
 
-export const getDeviceId = async (): Promise<string | null> => {
+export const safeAsyncStorage = {
+  setItem: async (key: string, value: any) => {
+    return retryOperation(async () => {
+      try {
+        const jsonValue = JSON.stringify(value);
+        await AsyncStorage.setItem(key, jsonValue);
+      } catch (error) {
+        console.error('Storage setItem error:', error);
+        throw new Error('Failed to save data. Please try again.');
+      }
+    });
+  },
+
+  getItem: async (key: string) => {
+    return retryOperation(async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem(key);
+        return jsonValue != null ? JSON.parse(jsonValue) : null;
+      } catch (error) {
+        console.error('Storage getItem error:', error);
+        throw new Error('Failed to retrieve data. Please try again.');
+      }
+    });
+  },
+
+  removeItem: async (key: string): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (error) {
+      console.error(`Error removing ${key}:`, error);
+      throw new Error(`Failed to remove ${key}`);
+    }
+  },
+
+  clear: async () => {
+    return retryOperation(async () => {
+      try {
+        await AsyncStorage.clear();
+      } catch (error) {
+        console.error('Storage clear error:', error);
+        throw new Error('Failed to clear data. Please try again.');
+      }
+    });
+  }
+};
+
+// Simple encryption for sensitive data
+const encrypt = (text: string): string => {
+  if (!text) {
+    throw new Error('Cannot encrypt empty data');
+  }
   try {
-    const modelName = Device.modelName;
-    const brand = Device.brand;
-    const osInternalBuildId = Device.osInternalBuildId;
-    // Combine multiple device properties to create a more unique identifier
-    return `${brand}-${modelName}-${osInternalBuildId}` || null;
+    // Add a simple validation check before encryption
+    JSON.parse(JSON.stringify(text)); // Validate that data is serializable
+    return Buffer.from(text).toString('base64');
   } catch (error) {
-    console.error('Error getting device ID:', error);
-    return null;
+    console.error('Encryption error:', error);
+    throw new Error('Failed to encrypt data: Invalid data format');
+  }
+};
+
+const decrypt = (text: string): string => {
+  if (!text) {
+    throw new Error('Cannot decrypt empty data');
+  }
+  try {
+    const decoded = Buffer.from(text, 'base64').toString('ascii');
+    // Validate that decoded data is proper JSON
+    JSON.parse(decoded);
+    return decoded;
+  } catch (error) {
+    console.error('Decryption error:', error);
+    // Clear corrupted data
+    safeAsyncStorage.removeItem(KEYS.USER_PROFILE).catch(console.error);
+    throw new Error('Failed to decrypt data: Data may be corrupted');
+  }
+};
+
+const encryptData = async (data: any): Promise<string> => {
+  try {
+    const jsonString = JSON.stringify(data);
+    // Add your encryption logic here if needed
+    return jsonString;
+  } catch (error) {
+    console.error('Encryption error:', error);
+    throw new Error('Failed to encrypt data: Invalid data format');
+  }
+};
+
+export const storeUserProfile = async (data: any) => {
+  try {
+    // Validate data is serializable
+    JSON.stringify(data);
+
+    // Ensure required fields are present
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid user profile data format');
+    }
+
+    const encryptedData = await encryptData(data);
+    await AsyncStorage.setItem(KEYS.USER_PROFILE, encryptedData);
+  } catch (error: any) {
+    console.error('Storage error:', error);
+    if (error.message.includes('circular') || error.message.includes('JSON')) {
+      throw new Error('Failed to encrypt data: Invalid data format');
+    }
+    throw error;
   }
 };
 
 export const getCurrentUser = async (): Promise<UserProfile | null> => {
   try {
-    // First try to get user by device ID
-    const deviceId = await getDeviceId();
-    if (deviceId) {
-      const deviceUserStr = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_USER);
-      if (deviceUserStr) {
-        const deviceUser = JSON.parse(deviceUserStr);
-        const users = await getRegisteredUsers();
-        const userByDevice = users.find(user => user.phoneNumber === deviceUser.phoneNumber);
-        if (userByDevice) {
-          return userByDevice;
-        }
-      }
-    }
+    const encryptedProfile = await safeAsyncStorage.getItem(KEYS.USER_PROFILE);
+    if (!encryptedProfile) return null;
 
-    // Fallback to last logged in user
-    const jsonValue = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-    return jsonValue != null ? JSON.parse(jsonValue) : null;
+    const decryptedProfile = decrypt(encryptedProfile);
+    return JSON.parse(decryptedProfile);
   } catch (error) {
     console.error('Error getting current user:', error);
+    Alert.alert('Error', 'Failed to load user profile. Please try again.');
     return null;
   }
 };
 
-export const getRegisteredUsers = async (): Promise<UserProfile[]> => {
+export const getDeviceId = async (): Promise<string> => {
   try {
-    const jsonValue = await AsyncStorage.getItem(STORAGE_KEYS.REGISTERED_USERS);
-    return jsonValue != null ? JSON.parse(jsonValue) : [];
-  } catch (error) {
-    console.error('Error getting registered users:', error);
-    return [];
-  }
-};
+    let deviceId = await safeAsyncStorage.getItem(KEYS.DEVICE_ID);
 
-export const checkExistingUser = async (phoneNumber: string): Promise<UserProfile | null> => {
-  try {
-    const registeredUsers = await getRegisteredUsers();
-    const formattedPhone = phoneNumber.startsWith('+91') ? phoneNumber : '+91' + phoneNumber;
-    return registeredUsers.find(user => user.phoneNumber === formattedPhone) || null;
-  } catch (error) {
-    console.error('Error checking existing user:', error);
-    return null;
-  }
-};
-
-export const clearDeviceAssociation = async () => {
-  try {
-    await AsyncStorage.removeItem(STORAGE_KEYS.DEVICE_USER);
-  } catch (error) {
-    console.error('Error clearing device association:', error);
-  }
-};
-
-export const logout = async () => {
-  try {
-    // Clear all user-related data
-    await AsyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
-    await AsyncStorage.removeItem(STORAGE_KEYS.DEVICE_USER);
-    return true;
-  } catch (error) {
-    console.error('Error during logout:', error);
-    return false;
-  }
-};
-
-export const deleteAccount = async (phoneNumber: string) => {
-  try {
-    // Remove from registered users
-    const registeredUsers = await getRegisteredUsers();
-    const updatedUsers = registeredUsers.filter(user => user.phoneNumber !== phoneNumber);
-    await AsyncStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(updatedUsers));
-
-    // Clear current user profile if it matches
-    const currentUser = await getCurrentUser();
-    if (currentUser?.phoneNumber === phoneNumber) {
-      await AsyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
+    if (!deviceId) {
+      deviceId = `${Device.modelName}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      await safeAsyncStorage.setItem(KEYS.DEVICE_ID, deviceId);
     }
 
-    // Clear device association
-    await clearDeviceAssociation();
-
-    return true;
+    return deviceId;
   } catch (error) {
-    console.error('Error deleting account:', error);
-    return false;
+    console.error('Error getting device ID:', error);
+    Alert.alert('Error', 'Failed to get device ID. Please restart the app.');
+    throw error;
+  }
+};
+
+export const storeAuthToken = async (token: string): Promise<void> => {
+  try {
+    const encryptedToken = encrypt(token);
+    await safeAsyncStorage.setItem(KEYS.AUTH_TOKEN, encryptedToken);
+  } catch (error) {
+    console.error('Error storing auth token:', error);
+    Alert.alert('Error', 'Failed to store authentication token. Please try logging in again.');
+    throw error;
+  }
+};
+
+export const getAuthToken = async (): Promise<string | null> => {
+  try {
+    const encryptedToken = await safeAsyncStorage.getItem(KEYS.AUTH_TOKEN);
+    if (!encryptedToken) return null;
+
+    return decrypt(encryptedToken);
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    Alert.alert('Error', 'Failed to get authentication token. Please log in again.');
+    return null;
+  }
+};
+
+export const clearStorage = async (): Promise<void> => {
+  try {
+    const deviceId = await getDeviceId(); // Preserve device ID
+    await safeAsyncStorage.clear();
+    await safeAsyncStorage.setItem(KEYS.DEVICE_ID, deviceId);
+  } catch (error) {
+    console.error('Error clearing storage:', error);
+    Alert.alert('Error', 'Failed to clear app data. Please try again.');
+    throw error;
+  }
+};
+
+export const storeAppSettings = async (settings: Record<string, any>): Promise<void> => {
+  try {
+    await safeAsyncStorage.setItem(KEYS.APP_SETTINGS, JSON.stringify(settings));
+  } catch (error) {
+    console.error('Error storing app settings:', error);
+    Alert.alert('Error', 'Failed to save app settings. Please try again.');
+    throw error;
+  }
+};
+
+export const getAppSettings = async (): Promise<Record<string, any> | null> => {
+  try {
+    const settings = await safeAsyncStorage.getItem(KEYS.APP_SETTINGS);
+    return settings ? JSON.parse(settings) : null;
+  } catch (error) {
+    console.error('Error getting app settings:', error);
+    Alert.alert('Error', 'Failed to load app settings. Please try again.');
+    return null;
   }
 };

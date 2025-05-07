@@ -1,7 +1,9 @@
+import { OCCUPATIONS } from '../utils/constants';
+
 export type UserProfile = {
   name: string;
   phoneNumber: string;
-  occupation: string;
+  occupation: typeof OCCUPATIONS[keyof typeof OCCUPATIONS];
   profileImage?: string; // URI of the profile image
   language?: string;
   gender?: 'Male' | 'Female' | 'Other';
