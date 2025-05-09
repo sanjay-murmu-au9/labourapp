@@ -5,6 +5,8 @@ import * as Location from 'expo-location';
 import { useDispatch } from 'react-redux';
 import { RootStackParamList, UserProfile } from '../navigation/types';
 import { storeUserProfile } from '../utils/storage';
+import LocationAnimation from '../components/LocationAnimation';
+import LocationErrorAnimation from '../components/LocationErrorAnimation';
 
 const WHATSAPP_GREEN = '#128C7E';
 
@@ -83,17 +85,18 @@ export const LocationScreen: React.FC<LocationScreenProps> = ({ navigation, rout
   useEffect(() => {
     getLocation();
   }, []);
-
   return (
     <View style={styles.container}>
+      <Text style={styles.titleText}>Location Services</Text>
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={WHATSAPP_GREEN} />
+          <LocationAnimation size={200} />
           <Text style={styles.loadingText}>Getting your location...</Text>
-        </View>
-      ) : error ? (
+          <Text style={styles.subText}>Please wait while we find your current location</Text>
+        </View>      ) : error ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <LocationErrorAnimation size={150} />          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.subText}>Unable to determine your current location</Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.retryButton} onPress={() => getLocation()}>
               <Text style={styles.buttonText}>Retry</Text>
@@ -105,8 +108,9 @@ export const LocationScreen: React.FC<LocationScreenProps> = ({ navigation, rout
         </View>
       ) : (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={WHATSAPP_GREEN} />
+          <LocationAnimation size={200} />
           <Text style={styles.loadingText}>Getting your location...</Text>
+          <Text style={styles.subText}>Please wait while we find your current location</Text>
         </View>
       )}
     </View>
@@ -120,41 +124,76 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  loadingContainer: {
+  titleText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: WHATSAPP_GREEN,
+    marginBottom: 30,
+    textAlign: 'center',
+  },  loadingContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    width: '100%',
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-  },
-  errorContainer: {
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 20,
+    marginTop: 20,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: WHATSAPP_GREEN,
     textAlign: 'center',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  retryButton: {
-    backgroundColor: WHATSAPP_GREEN,
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 100,
+  subText: {
+    marginTop: 8,
+    marginHorizontal: 20,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+  },  errorContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    width: '100%',
+  },
+  errorText: {
+    color: '#E53935',
+    marginVertical: 20,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
+  },  buttonContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 24,
+    justifyContent: 'center',
+  },retryButton: {
+    backgroundColor: WHATSAPP_GREEN,
+    padding: 12,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   skipButton: {
     backgroundColor: '#666',
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 100,
+    padding: 12,
+    borderRadius: 8,
+    minWidth: 120,
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: '600',
   },
 });

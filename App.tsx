@@ -40,6 +40,11 @@ export default function App() {
   useEffect(() => {
     const prepare = withErrorHandling(async () => {
       try {
+        // Import and run the AsyncStorage test
+        const { testAsyncStorage } = require('./src/utils/asyncStorageTest');
+        const storageTestResult = await testAsyncStorage();
+        console.log('AsyncStorage test result:', storageTestResult ? 'PASSED' : 'FAILED');
+
         // Get stored user data
         const user = await getCurrentUser();
         if (user) {
